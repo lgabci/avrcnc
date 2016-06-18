@@ -2,17 +2,18 @@
 #define F_CPU 8000000
 #endif
 
-#include "atmega8a.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
-#define MAXVALUE 100
+#define MAXPWM   100				/* max PWM value		*/
+#define MINVALUE 7				/* min value			*/
+#define MAXVALUE 12				/* max value			*/
 
 void initPWM() {
   DDRB = DDRB | (1 << DDRB7) | (1 << DDRB6) | (1 << DDRB2) | (1 << DDRB1);
   PORTB = 0x00;
 
-  ICR1 = MAXVALUE;
+  ICR1 = MAXPWM;
 
   TCCR1A = TCCR1A | (1 << COM1B1) | (1 << COM1A1);	/* non-inverting mode	*/
   // TCCR1A = TCCR1A | (1 << COM1A1) | (1 << COM1A0);	/* inverting mode	*/
@@ -22,8 +23,8 @@ void initPWM() {
   TCCR1B = TCCR1B | (1 << WGM13);	/* phase and freq correct, TOP = ICR1	*/
 
   //TCCR1B = TCCR1B | (1 << CS10);		/* CLKio / 1 - no prescalar	*/
-  //TCCR1B = TCCR1B | (1 << CS11);			/* CLKio / 8		*/
-  TCCR1B = TCCR1B | (1 << CS11) | (1 << CS10);		/* CLKio / 64		*/
+  TCCR1B = TCCR1B | (1 << CS11);			/* CLKio / 8		*/
+  //TCCR1B = TCCR1B | (1 << CS11) | (1 << CS10);	/* CLKio / 64		*/
   //TCCR1B = TCCR1B | (1 << CS12);			/* CLKio / 256		*/
   //TCCR1B = TCCR1B | (1 << CS12) | (1 << CS10);	/* CLKio / 1024		*/
 }
@@ -33,8 +34,8 @@ void setPWM(signed char w, char brake) {
     PORTB = PORTB & ~(1 << PB7);	/* first: switch off	*/
     PORTB = PORTB & ~(1 << PB6);
 
-    OCR1A = MAXVALUE;		/* switch on		*/
-    OCR1B = MAXVALUE;
+    OCR1A = MAXPWM;		/* switch on		*/
+    OCR1B = MAXPWM;
   }
   else if (w < 0) {		/* forward		*/
     OCR1A = 0;			/* first: switch off	*/
@@ -59,38 +60,47 @@ void setPWM(signed char w, char brake) {
 }
 
 int main(void) {
-  signed char i;
-  char j;
-  signed char step;
+  signed short int i;
+  signed char j;
+  char k;
 
   initPWM();
 
-/*
+  j = 1;
   while (1) {
-    for (i = 50; i > 0; i --) {
-      setPWM(50, 0);
-      _delay_ms(30);
-      setPWM(0, 1);
-      _delay_ms(1000);
+    for (i = MAXVALUE; i > MINVALUE; i --) {
+      setPWM(j * i, 0);
+      _delay_ms(100);
     }
-  }
-*/
 
-  step = 10;
-  i = 0;
-  while (1) {
-    setPWM(i, 0);
+    k = 0;
+    for (i = 0; i < 1000; i ++) {
+      setPWM(j * (MINVALUE + k), 0);
+      if (k) {
+        _delay_ms(15);
+      }
+      else {
+        _delay_ms(25);
+      }
+      k = ! k;
+    }
 
+    setPWM(0, 0);
     _delay_ms(1000);
 
-    if (i == MAXVALUE || i == -MAXVALUE) {
-      i = 0;
-      step = -step;
-      setPWM(i, 1);
-      _delay_ms(2000);
-    }
-
-    i = i + step;
+    j = - j;
+//    if (i == MAXVALUE || i == -MAXVALUE) {
+//      i = 0;
+//      step = -step;
+//      _delay_ms(2000);
+//      setPWM(i, j = ! j);
+//      _delay_ms(4000);
+//    }
+//
+//    i = i + step;
+    // if (j > 3) {
+    //   j = 0;
+    // }
   }
 
 }

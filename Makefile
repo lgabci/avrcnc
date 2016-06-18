@@ -21,14 +21,21 @@ LFUSE := 0xE4
 
 all : flash
 
-prog.s : prog.c
-	$(CC) $(CCFLAGS) -o $@ $^
-	chmod -x $@
+%.d : %.c
+	@$(CC) -M $(CCFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
 
-prog.o : prog.s
-	$(AS) $(ASFLAGS) -o $@ $^
+loaderobjs := prog.o
+ifneq ($(MAKECMDGOALS),clean)
+include $(loaderobjs:.o=.d)
+endif
 
-prog.elf : prog.o
+%.s : %.c
+	$(CC) $(CCFLAGS) -o $@ $<
+
+%.o : %.s
+	$(AS) $(ASFLAGS) -o $@ $<
+
+prog.elf : $(loaderobjs)
 	$(LD) $(LDFLAGS) -Map=$(patsubst %.elf,%.map,$@) -o $@ $^
 	chmod -x $@
 
@@ -46,4 +53,4 @@ flash : prog.hex
 
 # clean ------------------------------------------------------------------------
 clean :
-	rm -f prog.s prog.o prog.elf prog.map prog.hex
+	rm -f *.d *.s *.o *.elf *.bin *.map
