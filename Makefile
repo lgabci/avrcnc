@@ -24,7 +24,7 @@ all : flash
 %.d : %.c
 	@$(CC) -M $(CCFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
 
-loaderobjs := prog.o
+loaderobjs := prog.o lib/lcd_hd44780.o
 ifneq ($(MAKECMDGOALS),clean)
 include $(loaderobjs:.o=.d)
 endif
@@ -40,7 +40,6 @@ prog.elf : $(loaderobjs)
 	chmod -x $@
 
 prog.hex : prog.elf
-	#avr-objcopy -j .text -j .data -O ihex $^ $@
 	avr-objcopy -O ihex $^ $@
 
 flash : prog.hex
