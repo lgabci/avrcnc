@@ -27,7 +27,7 @@
  * */
 
 #ifndef F_CPU
-#define F_CPU 8000000
+#define F_CPU 1000000
 #endif
 
 #define LCDPORT		C
@@ -44,72 +44,77 @@
 
 #define BIT_RS		CON(CON(P,LCDPORT),4)	/* r/s bit in port	*/
 #define BIT_ENABLE	CON(CON(P,LCDPORT),5)	/* enable bit in port	*/
-#define BIT_BLACKLIGHT	CON(CON(P,LCDPORT),6)	/* backlight bit	*/
+#define BIT_BACKLIGHT	CON(CON(P,LCDPORT),6)	/* backlight bit	*/
+
+/* set port bit mask:
+	0x3f for 6 bits
+	0x7f for 7 bits (controlling backlight)
+*/
+#define PORT_MASK	0x3f		/* using only lower 6 bits	*/
 
 static void sendByte(unsigned char val, unsigned char rs);
 static void sendNibble(unsigned char val, unsigned char rs);
 
-static unsigned char backlight = 0;	/* backlight is off         */
-
-void delay_ms(unsigned char ms) {
-  while (ms --) {
-    _delay_ms(1);
-  }
-}
+static unsigned char backlight = 0;		/* backlight is off	*/
 
 static void sendNibble(unsigned char val, unsigned char rs) {
-  PORT_LCD =  backlight | (rs ? _BV(BIT_RS) : 0) | _BV(BIT_ENABLE) | val & 0x0f;
-  delay_ms(1);
-  PORT_LCD = PORT_LCD & ~ _BV(BIT_ENABLE);
-  delay_ms(2);
+  PORT_LCD = (backlight | (rs ? _BV(BIT_RS) : 0) | _BV(BIT_ENABLE) | (val & 0x0f)) & PORT_MASK;
+
+  _delay_ms(1);
+  PORT_LCD = PIN_LCD & ~ _BV(BIT_ENABLE);
+  _delay_ms(1);
 }
 
-static void sendByte(unsigned char val, unsigned char rs) {
-  sendNibble(val >> 4, rs);           /* high nibble          */
-  sendNibble(val, rs);                /* low nibble           */
+ static void sendByte(unsigned char val, unsigned char rs) {
+  sendNibble(val >> 4, rs);				/* high nibble	*/
+  sendNibble(val, rs);					/* low nibble	*/
 }
 
 void initLCD() {
-  unsigned char i;
+  char i;
 
   PORT_LCD = 0x00;
-  DDR_LCD = 0xff;		/* bits 0..7 are outputs	*/
+  DDR_LCD = PORT_MASK;			/* set output bits		*/
 
-  _delay_ms(100);			/* wait after power on	*/
+  for (i = 0; i < 3; i ++) {		/* repeat a few times		*/
+    char j;
 
-  for (i = 0; i < 3; i ++) {
-    sendNibble(0b0011, 0);      /* set 8 bit mode           */
-    delay_ms(5);
+    _delay_ms(100);			/* wait after power on		*/
+
+    for (j = 0; j < 3; j ++) {
+      sendNibble(0x03, 0);		/* set 8 bit mode		*/
+      _delay_ms(5);
+    }
+
+    sendNibble(0x02, 0);			/* set 4 bit mode		*/
+    _delay_ms(5);
+
+    sendByte(0x28, 0);			/* function set			*/
+    sendByte(0x08, 0);			/* set display off		*/
+    sendByte(0x01, 0);			/* clear screen			*/
+    _delay_ms(5);
+    sendByte(0x06, 0);			/* set entry mode		*/
+
+    switchOnLCD(0);
   }
-
-  sendNibble(0b0010, 0);          /* set 4 bit mode           */
-  delay_ms(1);
-
-  sendByte(0b00101000, 0);        /* function set             */
-  sendByte(0b00001000, 0);        /* set display off          */
-  sendByte(0b00000001, 0);        /* clear screen             */
-  delay_ms(5);
-  sendByte(0b00000110, 0);        /* set entry mode           */
-
-  switchOnLCD(0);
 }
 
-void sendStringLCD(const char *s) {
+void writeLCD(const char *s) {
   while (*s != '\0') {
     sendByte(*s ++, 1);
   }
 }
 
-void switchOnLCD(unsigned char cb) {    /* switch display on    */
-  backlight = _BV(BIT_BLACKLIGHT);
-  sendByte(0b00001100 | cb & (BIT_CURSOR | BIT_BLINKING), 0);
+void switchOnLCD(unsigned char cb) {		/* switch display on	*/
+  backlight = _BV(BIT_BACKLIGHT);
+  sendByte(0x0c | (cb & (_BV(BIT_CURSOR) | _BV(BIT_BLINKING))), 0);
 }
 
-void switchOffLCD() {           /* switch display off               */
+void switchOffLCD() {				/* switch display off	*/
   backlight = 0;
-  sendByte(0b00001000, 0);
+  sendByte(0x08, 0);
 }
 
-void setPosLCD(unsigned char col, unsigned char row) {  /* set position     */
-  sendByte(0b10000000 | (row << 6) + col, 0);
+void setPosLCD(unsigned char col, unsigned char row) {	/* set position	*/
+  sendByte(0x80 | (row << 6) | col, 0);
 }

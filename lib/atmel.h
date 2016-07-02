@@ -32,4 +32,6 @@ parameters:	x	numbering letter: A/B/C/D
 #define IS_HIGH(xn)		_READ(PIN,xn)
 #define IS_LOW(xn)		(! _READ(PIN,xn))
 
+#define SETVAL(port,mask,value)	((p) = (p) & ~(mask) | (value))
+
 #endif	/* #ifndef __atmel_h__	*/

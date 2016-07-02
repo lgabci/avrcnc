@@ -1,11 +1,10 @@
+CC := avr-gcc
+CCFLAGS := -mmcu=atmega8a -Os -S -std=c99 -pedantic -Werror -Wall -Wextra -Wunreachable-code
+
 AS := avr-as
 ASFLAGS := -mmcu=avr4 -mno-skip-bug
 
-CC := avr-gcc
-CCFLAGS := -mmcu=atmega8a -Os -S
-
 LD := avr-ld
-#LD := /usr/lib/gcc/avr/4.8.1/collect2
 LDFLAGS := -m avr4 /usr/lib/gcc/avr/4.8.1/../../../avr/lib/avr4/crtm8a.o -L/usr/lib/gcc/avr/4.8.1/avr4 -L/usr/lib/gcc/avr/4.8.1/../../../avr/lib/avr4 -L/usr/lib/gcc/avr/4.8.1 -L/usr/lib/gcc/avr/4.8.1/../../../avr/lib --start-group -lgcc -lm -lc --end-group
 
 DEV := $(shell ls /dev/ttyACM* 2>/dev/null)
@@ -13,18 +12,21 @@ AD := avrdude
 ADFLAGS := -p atmega8 -c stk500v2 -P $(DEV)
 
 HFUSE := 0xD9
-LFUSE := 0xE4
+LFUSE := 0xE1
 
 .DELETE_ON_ERROR :
 .SUFFIXES :
-.PHONY : flash clean
+.PHONY : flash clean reset
+
+# C library files
+vpath %.c lib
 
 all : flash
 
 %.d : %.c
 	@$(CC) -M $(CCFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
 
-loaderobjs := prog.o lib/lcd_hd44780.o
+loaderobjs := prog.o lcd_hd44780.o
 ifneq ($(MAKECMDGOALS),clean)
 include $(loaderobjs:.o=.d)
 endif
@@ -52,4 +54,8 @@ flash : prog.hex
 
 # clean ------------------------------------------------------------------------
 clean :
-	rm -f *.d *.s *.o *.elf *.bin *.map
+	rm -f *.d *.s *.o *.elf *.map *.hex
+
+# reset MCU
+reset :
+	$(AD) $(ADFLAGS) -qq -U lfuse:v:$(LFUSE):m

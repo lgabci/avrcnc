@@ -8,13 +8,13 @@
 
 void initLCD();				/* initialize LCD	*/
 
-void sendStringLCD(const char *s);	/* write string		*/
+void writeLCD(const char *s);		/* write string		*/
 
-void switchOnLCD(unsigned char cb);	/* switch on LCD	*/
 /* parameters:
 _BV(BIT_CURSOR)      : cursor is visible
 _BV(BIT_BLINKING)    : cursor is blinking
 */
+void switchOnLCD(unsigned char cb);	/* switch on LCD	*/
 
 void switchOffLCD();			/* switch off LCD	*/
 
