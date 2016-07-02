@@ -95,7 +95,7 @@ void initLCD() {
     _delay_ms(5);
     sendByte(0x06, 0);			/* set entry mode		*/
 
-    switchOnLCD(0);
+    switchOnLCD(0, 0);
   }
 }
 
@@ -105,9 +105,9 @@ void writeLCD(const char *s) {
   }
 }
 
-void switchOnLCD(unsigned char cb) {		/* switch display on	*/
+void switchOnLCD(char cursor, char blinking) {		/* switch display on	*/
   backlight = _BV(BIT_BACKLIGHT);
-  sendByte(0x0c | (cb & (_BV(BIT_CURSOR) | _BV(BIT_BLINKING))), 0);
+  sendByte(0x0c | (cursor ? _BV(BIT_CURSOR) : 0) | (blinking ? _BV(BIT_BLINKING) : 0), 0);
 }
 
 void switchOffLCD() {				/* switch display off	*/

@@ -3,38 +3,54 @@
 #endif
 
 #include <avr/io.h>
-#include <stdio.h>
-#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+#include <stdlib.h>
+#include <string.h>
 #include <util/delay.h>
+
 #include "lib/atmel.h"
 #include "lib/lcd_hd44780.h"
 
 #define PWMPORT B,1		/* PWM port			*/
-#define OCRPORT OCR1A		/* OCR			*/
+#define OCRPORT OCR1A		/* OCR				*/
 
 #define PINFORWARD D,7		/* forward pin			*/
 #define PINREVERSE B,0		/* reverse pin			*/
 
 #define MAXPWM   255				/* max PWM value		*/
 
+#define I0PORT D,2		/* INT0 port			*/
+#define I1PORT D,3		/* INT1 port			*/
+
+volatile unsigned long int	pos = 0;
+
+/* interrupt service rutin for INT0
+*/
+ISR(INT0_vect) {
+  pos ++;
+}
+
 /* initialize PWM
+parameters:	-
 */
 void initPWM() {
+  LOW(PWMPORT);
   OUTPUT(PWMPORT);
+  LOW(PINFORWARD);
   OUTPUT(PINFORWARD);
+  LOW(PINREVERSE);
   OUTPUT(PINREVERSE);
-
-  PORTB = 0x00;
 
   ICR1 = MAXPWM;
 
-  TCCR1A = TCCR1A | (1 << COM1B1) | (1 << COM1A1);	/* non-inverting mode	*/
+  TCCR1A = TCCR1A | (1 << COM1A1);			/* non-inverting mode	*/
   // TCCR1A = TCCR1A | (1 << COM1A1) | (1 << COM1A0);	/* inverting mode	*/
 
-  TCCR1B = TCCR1B | (1 << WGM13) | (1 << WGM12);	/* fast PWM, TOP = ICR1	*/
-  TCCR1A = TCCR1A | (1 << WGM11);			/* fast PWM, TOP = ICR1	*/
-  // TCCR1B = TCCR1B | (1 << WGM12) | (1 << WGM10);	/* fast PWM, 8 bit	*/
-  // TCCR1B = TCCR1B | (1 << WGM13);	/* phase and freq correct, TOP = ICR1	*/
+  //TCCR1B = TCCR1B | (1 << WGM13) | (1 << WGM12);	/* fast PWM, TOP = ICR1	*/
+  //TCCR1A = TCCR1A | (1 << WGM11);			/* fast PWM, TOP = ICR1	*/
+  //TCCR1B = TCCR1B | (1 << WGM12);			/* fast PWM, 8 bit	*/
+  //TCCR1A = TCCR1A | (1 << WGM10);			/* fast PWM, 8 bit	*/
+  TCCR1B = TCCR1B | (1 << WGM13);	/* phase and freq correct, TOP = ICR1	*/
 
   TCCR1B = TCCR1B | (1 << CS10);		/* CLKio / 1 = no prescalar	*/
   //TCCR1B = TCCR1B | (1 << CS11);			/* CLKio / 8		*/
@@ -49,13 +65,10 @@ parameters:	w:	pulse width
 		brake:	braking (only if w = 0)
 */
 void setPWM(unsigned char w, char fwd, char brake) {
-  char num[4];		/* max 3 digits + tailing zero	*/
+  char text[8];		/* max 3 digits + tailing zero	*/
+  char len;
 
-//  sprintf(num, "%d", w);
-  num[0] = 'A';		//
-  num[1] = 0;		//
-  setPosLCD(0, 0);
-  writeLCD(num);
+  text[0] = ' ';
 
   if (w == 0) {		/* width = 0, switch off	*/
     OCRPORT = 0;
@@ -63,24 +76,41 @@ void setPWM(unsigned char w, char fwd, char brake) {
     if (brake) {		/* braking		*/
       HIGH(PINREVERSE);
       HIGH(PINFORWARD);
+
+      text[0] = 'B';
     }
     else {			/* free-wheeling	*/
       LOW(PINREVERSE);
       LOW(PINFORWARD);
     }
+
+    text[1] = ' ';
   }
   else if (fwd) {		/* forward		*/
     OCRPORT = 0;
     LOW(PINREVERSE);
     HIGH(PINFORWARD);
     OCRPORT = w;
+
+    text[1] = '+';
   }
   else {			/* reverse		*/
     OCRPORT = 0;
     LOW(PINFORWARD);
     HIGH(PINREVERSE);
     OCRPORT = w;
+
+    text[1] = '-';
   }
+
+  itoa(w, &text[2], 10);
+  len = strlen(text);
+  text[(int)len] = ' ';
+  text[len + 1] = ' ';
+  text[len + 2] = '\0';
+
+  setPosLCD(0, 0);
+  writeLCD(text);
 }
 
 int main(void) {
@@ -91,11 +121,22 @@ int main(void) {
   initPWM();
 
   initLCD();
-  switchOnLCD(_BV(BIT_CURSOR) | _BV(BIT_BLINKING));
+  switchOnLCD(0, 0);
+
+  LOW(I0PORT);				/* make input for INT ports	*/
+  INPUT(I0PORT);
+  LOW(I1PORT);
+  INPUT(I1PORT);
+
+  GICR = GICR | _BV(INT0) | _BV(INT1);		/* enable INT0 and INT1	*/
+  MCUCR = MCUCR | _BV(ISC00) | _BV(ISC10);	/* any change		*/
+  sei();					/* enable interrupts	*/
 
   fwd = 1;
   brake = 0;
   while (1) {
+    char buf[8];
+
     for (i = 0; i < MAXPWM / 5; i ++) {
       setPWM(i, fwd, 0);
       _delay_ms(10);
@@ -110,5 +151,10 @@ int main(void) {
     if (fwd) {
       brake = ! brake;
     }
+
+    itoa(pos, buf, 10);
+    setPosLCD(0, 1);
+    writeLCD(buf);
+
   }
 }

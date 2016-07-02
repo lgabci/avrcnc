@@ -14,7 +14,7 @@ void writeLCD(const char *s);		/* write string		*/
 _BV(BIT_CURSOR)      : cursor is visible
 _BV(BIT_BLINKING)    : cursor is blinking
 */
-void switchOnLCD(unsigned char cb);	/* switch on LCD	*/
+void switchOnLCD(char cursor, char blinking);	/* switch display on	*/
 
 void switchOffLCD();			/* switch off LCD	*/
 
