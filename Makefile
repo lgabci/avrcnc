@@ -14,11 +14,13 @@ ADFLAGS := -p atmega8 -c stk500v2 -P $(DEV)
 VERFILE := flashwrt.txt
 
 HFUSE := 0xD9
-LFUSE := 0xE1
+#LFUSE := 0xE1
+LFUSE := 0xE4
 
 .DELETE_ON_ERROR :
 .SUFFIXES :
 .PHONY : flash clean reset
+.SECONDARY :
 
 # C library files
 vpath %.c lib

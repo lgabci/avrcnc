@@ -1,5 +1,5 @@
 #ifndef F_CPU
-#define F_CPU 1000000
+#define F_CPU 8000000
 #endif
 
 #include <avr/io.h>
@@ -14,21 +14,50 @@
 #define PWMPORT B,1		/* PWM port			*/
 #define OCRPORT OCR1A		/* OCR				*/
 
-#define PINFORWARD D,7		/* forward pin			*/
-#define PINREVERSE B,0		/* reverse pin			*/
+#define PINFORWARD B,0		/* forward pin			*/
+#define PINREVERSE D,7		/* reverse pin			*/
 
 #define MAXPWM   255				/* max PWM value		*/
 
 #define I0PORT D,2		/* INT0 port			*/
 #define I1PORT D,3		/* INT1 port			*/
 
-volatile unsigned long int	pos = 0;
+volatile signed long int	pos = 0;
+volatile signed long int	err = 0;
+volatile signed long int	spu = 0;
+
+const unsigned char fwd[4] = {2, 0, 3, 1};
+const unsigned char rev[4] = {1, 3, 0, 2};
+
+volatile unsigned char prevval;
 
 /* interrupt service rutin for INT0
 */
 ISR(INT0_vect) {
-  pos ++;
+  unsigned char val;
+
+  val = (PIND & (_BV(PIND2) | _BV(PIND3))) >> PIND2;
+
+  if (val == prevval) {			/* spurious int	*/
+    spu ++;
+    return;
+  }
+  else if (fwd[prevval] == val) {	/* forward	*/
+    pos ++;
+  }
+  else if (rev[prevval] == val) {	/* reverse	*/
+    pos --;
+  }
+  else {				/* error	*/
+    err ++;
+  }
+
+  prevval = val;
 }
+
+/* interrupt service rutin for INT1, the same as INT0
+*/
+ISR(INT1_vect, ISR_ALIASOF(INT0_vect));
 
 /* initialize PWM
 parameters:	-
@@ -114,9 +143,12 @@ void setPWM(unsigned char w, char fwd, char brake) {
 }
 
 int main(void) {
-  unsigned char i;
-  char fwd;
-  char brake;
+//  unsigned char i;
+//  char fwd;
+//  char brake;
+char stopped = 0;
+unsigned long int t = 0;
+//signed int speed;
 
   initPWM();
 
@@ -128,15 +160,57 @@ int main(void) {
   LOW(I1PORT);
   INPUT(I1PORT);
 
+  prevval = (PIND & (_BV(PIND2) | _BV(PIND3))) >> PIND2;	/* init	*/
+
   GICR = GICR | _BV(INT0) | _BV(INT1);		/* enable INT0 and INT1	*/
   MCUCR = MCUCR | _BV(ISC00) | _BV(ISC10);	/* any change		*/
   sei();					/* enable interrupts	*/
 
-  fwd = 1;
-  brake = 0;
+  setPWM(255, 0, 0);
+//  setPWM(255 / 62 * 44, 1, 0);
+//  setPWM(255 / 62 * 20, 1, 0);
+
+//  fwd = 1;
+//  brake = 0;
+  pos = 20000;
   while (1) {
     char buf[8];
 
+#if 0
+  speed = 640 - pos;
+  if (speed < -255) {
+    speed = -255;
+  }
+  if (speed > 255) {
+    speed = 255;
+  }
+  setPWM(speed < 0 ? - speed : speed, speed >= 0, speed == 0);
+#else
+if (! stopped) {
+  signed long int p;
+
+  cli();
+  p = pos;
+  sei();
+
+  t ++;
+  if (p <= 10000) {
+    stopped = 1;
+    setPWM(0, 0, 1);
+    _delay_ms(2000);
+    initLCD();
+    switchOnLCD(0, 0);
+    setPWM(0, 0, 0);
+//  initLCD();
+//  switchOnLCD(0, 0);
+//  }
+//  else {
+//    setPWM((10000 - pos) / 100 + 155, 1, 0);
+  }
+}
+#endif
+
+/* -----------------------------------------------------------------------------
     for (i = 0; i < MAXPWM / 5; i ++) {
       setPWM(i, fwd, 0);
       _delay_ms(10);
@@ -151,10 +225,27 @@ int main(void) {
     if (fwd) {
       brake = ! brake;
     }
+----------------------------------------------------------------------------- */
 
     itoa(pos, buf, 10);
     setPosLCD(0, 1);
     writeLCD(buf);
 
+    buf[0] = ' ';
+    itoa(err, &buf[1], 10);
+    writeLCD(buf);
+
+    itoa(spu, &buf[1], 10);
+    writeLCD(buf);
+
+    itoa(t, &buf[1], 10);
+    writeLCD(buf);
+
+    buf[1] = pos % 32 == 0 ? 'X' : ' ';
+    buf[2] = ' ';
+    buf[3] = '\0';
+    writeLCD(buf);
+
+    _delay_ms(25);
   }
 }
