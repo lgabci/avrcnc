@@ -1,4 +1,3 @@
-
 //$fn = 100;
 
 module square_bar(dim) {
@@ -16,31 +15,59 @@ module square_bar(dim) {
   }
 }
 
-module square_tube(dim, l, angle, pos, rot) {
-  w = dim[0];
-  h = dim[1];
+module square_tube(dim, z, a, pos, rot) {
+  x = dim[0];
+  y = dim[1];
   d = dim[2];
   r = dim[3];
-  
+
+  q = 50;
+
   translate(pos) {
     rotate(rot) {
       difference() {
-        square_bar([w, h, l, r]);
-        square_bar([w - 2 * d, h - 2 * d, l, r]);
+        square_bar([x, y, z, r]);
+        square_bar([x - 2 * d, y - 2 * d, z + 1, r]);
+
+
+  color("red") {
+    translate([0, 0, (z - tan(a[0]) * y) / 2]) {
+      rotate([a[0], 0, 0]) {
+        translate([0, 0, q / 2]) {
+          cube([4 * x, 3 * y, q], center=true);
+        }
+      }
+    }
+  }
+  color("green") {
+    translate([0, 0, (z - tan(a[1]) * x) / 2]) {
+      rotate([0, a[1], 0]) {
+        translate([0, 0, q / 2]) {
+          cube([4 * x, 3 * y, q], center=true);
+        }
       }
     }
   }
 
-  translate([0, 0, l / 2 - w * sin(angle[0])]) {
-    rotate([angle[0], 0, 0]) {
-      color("red") {
-        cube([w / cos(angle[0]), h, 1], center=true);
       }
     }
   }
+
+q = 1;
+  color("blue") {
+    translate([0, 0, (z - tan(a[1]) * x - tan(a[0]) * y) / 2]) {
+      rotate([a[0], a[1], 0]) {
+        translate([0, 0, q / 2]) {
+          cube([4 * x, 3 * y, q], center=true);
+        }
+      }
+    }
+  }
+
+
 }
 
-square_tube([20, 40, 2, 2], 80, [60, 0], [0, 0, 0], [0, 0, 0]);
+square_tube([20, 20, 2, 2], 80, [45, 45], [0, 0, 0], [0, 0, 0]);
 
 /*
 linear_extrude(twist = 180) {
