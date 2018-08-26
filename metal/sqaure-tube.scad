@@ -1,11 +1,6 @@
 //$fn = 100;
 
-module square_bar(dim) {
-  w = dim[0];
-  h = dim[1];
-  l = dim[2];
-  r = dim[3];
-
+module _square_bar(w, h, l, r) {
   hull() {
     for (i = [[-1, -1], [-1, 1], [1, 1], [1, -1]]) {
       translate([i[0] * (w / 2 - r), i[1] * (h / 2 - r), 0]) {
@@ -15,67 +10,52 @@ module square_bar(dim) {
   }
 }
 
-module square_tube(dim, z, a, pos, rot) {
-  x = dim[0];
-  y = dim[1];
+module square_tube(dim, pos1, pos2, a) {
+  w = dim[0];
+  h = dim[1];
   d = dim[2];
   r = dim[3];
 
-  q = 50;
+  x = pos2[0] - pos1[0];
+  y = pos2[1] - pos1[1];
+  z = pos2[2] - pos1[2];
+  l = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
 
-  translate(pos) {
+  rot = [acos(z / l), 0, atan2(y, x) + 90];
+  //rot = [0, 0, 0];
+
+  translate(pos1) {
     rotate(rot) {
       difference() {
-        square_bar([x, y, z, r]);
-        square_bar([x - 2 * d, y - 2 * d, z + 1, r]);
+        _square_bar(w, h, l, r);
+        _square_bar(w - 2 * d, h - 2 * d, l + 1, r);
+      }
+      q = 0.1;
+      translate([0, 0, (l - tan(a[0]) * h) / 2]) {
+        rotate([a[0], 0, a[1]]) {
+          translate([0, 0, q / 2]) {
+            color("lightgreen") {
+              cube([100, 100, q], center=true);
+            }
+          }
+        }
+      }
+    }
+  }
 
 
+}
+
+
+square_tube([20, 40, 2, 2], [0, 0, 0], [0, 0, 200], [45, 0]);
+
+translate([50, 100, 25]) {
   color("red") {
-    translate([0, 0, (z - tan(a[0]) * y) / 2]) {
-      rotate([a[0], 0, 0]) {
-        translate([0, 0, q / 2]) {
-          cube([4 * x, 3 * y, q], center=true);
-        }
-      }
-    }
+    sphere(r=1);
   }
-  color("green") {
-    translate([0, 0, (z - tan(a[1]) * x) / 2]) {
-      rotate([0, a[1], 0]) {
-        translate([0, 0, q / 2]) {
-          cube([4 * x, 3 * y, q], center=true);
-        }
-      }
-    }
-  }
-
-      }
-    }
-  }
-
-q = 1;
+}
+translate([-50, -100, -25]) {
   color("blue") {
-    translate([0, 0, (z - tan(a[1]) * x - tan(a[0]) * y) / 2]) {
-      rotate([a[0], a[1], 0]) {
-        translate([0, 0, q / 2]) {
-          cube([4 * x, 3 * y, q], center=true);
-        }
-      }
-    }
+    sphere(r=1);
   }
-
-
 }
-
-square_tube([20, 20, 2, 2], 80, [45, 45], [0, 0, 0], [0, 0, 0]);
-
-/*
-linear_extrude(twist = 180) {
-    hull() {
-circle(r = 1);
-translate([3, 0, 0]) {
-  circle(r = 1);
-}
-}
-}
-*/
