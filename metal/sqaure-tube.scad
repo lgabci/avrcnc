@@ -22,7 +22,6 @@ module square_tube(dim, pos1, pos2, a) {
   l = sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
 
   rot = [acos(z / l), 0, atan2(y, x) + 90];
-  //rot = [0, 0, 0];
 
   translate(pos1) {
     rotate(rot) {
@@ -30,11 +29,13 @@ module square_tube(dim, pos1, pos2, a) {
         _square_bar(w, h, l, r);
         _square_bar(w - 2 * d, h - 2 * d, l + 1, r);
       }
+
+
       q = 0.1;
-      translate([0, 0, (l - tan(a[0]) * h) / 2]) {
+      translate([0, 0, (l - cos(a[0]) * cos(a[1]) * h) / 2]) {
         rotate([a[0], 0, a[1]]) {
           translate([0, 0, q / 2]) {
-            color("lightgreen") {
+            #color("green") {
               cube([100, 100, q], center=true);
             }
           }
@@ -47,7 +48,7 @@ module square_tube(dim, pos1, pos2, a) {
 }
 
 
-square_tube([20, 40, 2, 2], [0, 0, 0], [0, 0, 200], [45, 0]);
+square_tube([20, 40, 2, 2], [0, 0, 0], [0, 0, 200], [45, 60]);
 
 translate([50, 100, 25]) {
   color("red") {
