@@ -21,6 +21,7 @@ module square_tube(l, dim = [20, 20, 2, 3], pos = [0, 0, 0], rot = [0, 0, 0], a 
       //rotate([0, 0, zrot]) {
         difference() {
           _square_bar(w, h, l, r);
+          //cube([w, h, l], center = true);
           _square_bar(w - 2 * d, h - 2 * d, l + 1, r - d);
 
 
@@ -29,34 +30,24 @@ module square_tube(l, dim = [20, 20, 2, 3], pos = [0, 0, 0], rot = [0, 0, 0], a 
           //    #cube([3 * w, 2 * h, 0.01], center = true);
           //  }
           //}
-       }
-          w2 = w / 2;
-          h2 = h / 2;
-          l2 = l / 2;
-          
-          wt = w * tan(a[0]);
-          ht = h * tan(a[1]);
-          lm = l / 2 + 20; //ht + wt + 1;
-          
-          #polyhedron(points = [[-w2, -h2, l2], [w2, -h2, l2 - wt], [w2, h2, l2 - wt - ht], [ -w2, h2, l2 - ht],
-                                [-w2, -h2, lm], [w2, -h2, lm - wt], [w2, h2, lm - wt - ht], [ -w2, h2, lm - ht]],
-            faces = [[0, 1, 2, 3], [0, 3, 7, 4], [5, 6, 2, 1], [4, 5, 1, 0], [6, 7, 3, 2], [7, 6, 5, 4]],
-            convexity = 0);
-          /*
-          translate([-w / 2, -h / 2, l / 2]) {
-            #sphere(r = 2);
+
+          if (a != [0, 0]) {
+            w2 = w / 2;
+            h2 = h / 2;
+            l2 = l / 2;
+            
+            wt = w * tan(a[0]);
+            ht = h * tan(a[1]);
+            lm = l2 + ht + wt + 1;
+
+            polyhedron(points = [[-w2, -h2, l2], [w2, -h2, l2 - wt], [w2, h2, l2 - wt - ht], [ -w2, h2, l2 - ht],
+                                  [-w2, -h2, lm], [w2, -h2, lm - wt], [w2, h2, lm - wt - ht], [ -w2, h2, lm - ht]],
+              faces = [[0, 1, 2, 3], [0, 3, 7, 4], [5, 6, 2, 1], [4, 5, 1, 0], [6, 7, 3, 2], [7, 6, 5, 4]],
+              convexity = 0);
           }
-          translate([w / 2, -h / 2, (l - wt) / 2]) {
-            #sphere(r = 2);
-          }
-          translate([w / 2, h / 2, (l - wt - ht) / 2]) {
-            #sphere(r = 2);
-          }
-          translate([-w / 2, h / 2, (l - ht) / 2]) {
-            #sphere(r = 2);
-          }
-          */
-        //}
+
+
+        }
       //}
     }
   }
@@ -65,7 +56,8 @@ module square_tube(l, dim = [20, 20, 2, 3], pos = [0, 0, 0], rot = [0, 0, 0], a 
 }
 
 
-square_tube(200, [20, 40, 2, 3], a = [45, 45]);
+square_tube(200, [20, 40, 2, 3], a = [0, 45]);
+square_tube(200 + tan(45) * 40, [40, 80, 2, 3], a = [0, 45]);
 //square_tube([20, 40, 2, 3], [50, 0, 105], [0, 200, 105], [1, 1], 0);
 //square_tube([40, 20, 2, 3], [50, 0, 0],   [50, 0, 105],   [2, 2], atan2(200, -50) - 90);
 //square_tube([40, 20, 2, 3], [0, 200, 0],  [0, 200, 105], [4, 4], atan2(200, -50) - 90);
