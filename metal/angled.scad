@@ -1,16 +1,4 @@
-/* square tube */
-
-module _square_bar(w, h, l, r) {
-  hull() {
-    for (i = [[-1, -1], [-1, 1], [1, 1], [1, -1]]) {
-      translate([i[0] * (w / 2 - r), i[1] * (h / 2 - r), 0]) {
-        cylinder(h = l, r = r, center = true);
-      }
-    }
-  }
-}
-
-module square_tube(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]) {
+module angled(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]) {
   w = dim[0];
   h = dim[1];
   d = dim[2];
@@ -19,8 +7,11 @@ module square_tube(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0
   translate(pos) {
     rotate(rot) {
       difference() {
-        _square_bar(w, h, l, r);
-        _square_bar(w - 2 * d, h - 2 * d, l + 1, r - d);
+        cube([w, h, l], center = true);
+        translate([d, d, 0]) {
+          cube([w, h, l + 1], center = true);
+        }
+        cube();
 
         for (i = [0 : 1]) {
           if (a[i] != [0, 0]) {
@@ -54,3 +45,19 @@ module square_tube(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0
 
 
 }
+
+l1 = 200;
+l2 = 100;
+w = 50;
+h = 40;
+
+angled(l1, [w, h, 5, 10], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]);
+/*
+square_tube(l1, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, 0, 0], pos = [10, 20, 100]);
+square_tube(l1, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, 0, 180], pos = [l2 - w + 10, 20, 100]);
+
+square_tube(l2, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, 90, 0], pos = [(l2 - w) / 2 + 10, 20, l1 - w / 2]);
+square_tube(l2, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, -90, 0], pos = [(l2 - w) / 2 + 10, 20, w / 2]);
+
+square_tube(l2 - 2 * w, [w, h, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 90, 0], pos = [(l2 - w) / 2 + 10, 20, l1 / 2]);
+*/
