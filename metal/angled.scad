@@ -7,11 +7,26 @@ module angled(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], po
   translate(pos) {
     rotate(rot) {
       difference() {
-        cube([w, h, l], center = true);
-        translate([d, d, 0]) {
-          cube([w, h, l + 1], center = true);
+        //cube([w, h, l], center = true);
+        //translate([d, d, 0]) {
+        //  cube([w, h, l + 1], center = true);
+        //}
+        union() {
+          translate([0, -(h - d) / 2, 0]) {
+            cube([w, d, l], center = true);
+          }
+          translate([-(w - d) / 2, 0, 0]) {
+            cube([d, h, l], center = true);
+          }
+          if (r > 0) {
+            translate([-w / 2 + r, -h / 2 + r, 0]) {
+              cube([r, r, l], center = true);
+            }
+          }
         }
-        cube();
+        translate([-w / 2 + d + r, -h / 2 + d + r, 0]) {
+          cylinder(h = l + 1, r = r, center = true);
+        }
 
         for (i = [0 : 1]) {
           if (a[i] != [0, 0]) {
@@ -35,7 +50,7 @@ module angled(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], po
               faces = [[0, 1, 2, 3], [0, 3, 7, 4],
                        [5, 6, 2, 1], [4, 5, 1, 0],
                        [6, 7, 3, 2], [7, 6, 5, 4]],
-              convexity = 0);
+              convexity = 1);
           }
         }
 
@@ -49,9 +64,9 @@ module angled(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], po
 l1 = 200;
 l2 = 100;
 w = 50;
-h = 40;
+h = 50;
 
-angled(l1, [w, h, 5, 10], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]);
+angled(l1, [w, h, 5, 5], a = [[45, 45], [0, 1]], rot = [0, 0, 0], pos = [0, 0, 0]);
 /*
 square_tube(l1, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, 0, 0], pos = [10, 20, 100]);
 square_tube(l1, [w, h, 2, 3], a = [[45, 0], [45, 0]], rot = [0, 0, 180], pos = [l2 - w + 10, 20, 100]);
