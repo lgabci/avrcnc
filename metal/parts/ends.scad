@@ -1,3 +1,5 @@
+/* AVR-CNC angled endings */
+
 module ends(dim = [1, 1, 1], a = [[0, 0], [0, 0]]) {
   l = dim[0];
   w = dim[1];
@@ -19,10 +21,10 @@ module ends(dim = [1, 1, 1], a = [[0, 0], [0, 0]]) {
 
       m = i == 0 ? 1 : -1;
       
-      top =    [[-w2, -h2, m * (lm - ht)], [w2, -h2, m * (lm - wt - ht)],
-                [w2,  h2,  m * (lm - wt)], [-w2, h2, m * (lm)]];
-      bottom = [[-w2, -h2, m * (l2 - ht)], [w2, -h2, m * (l2 - wt - ht)],
-                [w2,  h2,  m * (l2 - wt)], [-w2, h2, m * (l2)]];
+      top =    [[-w2, -h2, m * (lm)], [w2, -h2, m * (lm - wt)],
+                [w2,  h2,  m * (lm - wt - ht)], [-w2, h2, m * (lm - ht)]];
+      bottom = [[-w2, -h2, m * (l2)], [w2, -h2, m * (l2 - wt)],
+                [w2,  h2,  m * (l2 - wt - ht)], [-w2, h2, m * (l2 - ht)]];
       
       points = i == 0 ? concat(bottom, top) : concat (top, bottom);
 

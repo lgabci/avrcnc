@@ -1,4 +1,4 @@
-/* square tube */
+/* AVR-CNC square tube */
 
 include <ends.scad>;
 
@@ -12,7 +12,7 @@ module _square_bar(w, h, l, r) {
   }
 }
 
-module square_tube(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]) {
+module square_tube(l = 100, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0], pos = [0, 0, 0]) {
   w = dim[0];
   h = dim[1];
   d = dim[2];
@@ -31,5 +31,3 @@ module square_tube(l, dim = [20, 20, 2, 3], a = [[0, 0], [0, 0]], rot = [0, 0, 0
 
 
 }
-
-square_tube(l = 100, a = [[0, 0], [45, 0]]);
